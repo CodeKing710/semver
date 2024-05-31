@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# semver's installer
+install() {
+	local repo="$(find "$HOME" -type d -name semver 2>/dev/null | head -1)"
+	cp "$repo"/semver "$HOME"/bin || return
+	cp -r "$repo"/.semver "$HOME"/ || return
+	echo "semver installed!"
+}
+
+install

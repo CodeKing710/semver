@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# semver's main code
+
+autoupdate="$(cat $HOME/.semver/.cfg | grep 'autoup' | cut -d '=' -f2)"
+repo=$(find $HOME -type d -name "semver" 2>/dev/null | head -1)
+
+# Check for unit test
+if [[ "$SEMVER_TST" == "true" ]]; then
+	# Load the lib from the repo and set prgroot to repo
+	echo -e "[SEMVER] UNIT TEST MODE! READING FROM REPO!"
+	source "$repo"/.semver/.lib
+	prgroot="$repo/.semver"
+elif [[ "$autoupdate" == "true" ]]; then
+	# Check for updates
+	[ ! -d "$HOME"/.semver ] && "$repo/install"
+	if [[ "$(diff "$repo"/.semver "$HOME"/.semver)" ]]; then echo "Updating semver..."; "$repo/install"; fi
+	
+	# Load lib
+	source "$HOME"/.semver/.lib
+else
+	source "$HOME"/.semver/.lib
+fi
+
+
+__semver() {
+	if [[ -z "$1" ]]; then
+		__args -?
+	else
+		if [[ "$1" =~ "-" ]]; then
+			# Arg mode
+			__args "$@"
+		else
+			# Command mode
+			__cmds "$@"
+		fi
+	fi
+	# Write your app's main flow here (General stub supports arg handling)
+}
+
+__semver "$@"
+
+# Cleanup for accidental sourcing
+unset __semver __args __cwd autoupdate repo
