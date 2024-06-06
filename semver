@@ -16,7 +16,7 @@ if [[ "$SEMVER_TST" == "true" ]]; then
 elif [[ "$autoupdate" == "true" ]]; then
 	# Check for updates
 	[ ! -d "$HOME"/.semver ] && "$repo/install"
-	if [[ "$(diff "$repo"/.semver "$HOME"/.semver)" ]]; then echo "Updating semver..."; "$repo/install"; fi
+	if [[ -n "$(diff "$repo"/.semver "$HOME"/.semver)" || -n "$(diff "$repo"/semver "$HOME"/bin/semver)" ]]; then echo "Updating semver..."; "$repo/install"; fi
 	
 	# Load lib
 	source "$HOME"/.semver/.lib
@@ -27,7 +27,7 @@ fi
 
 __semver() {
 	if [[ -z "$1" ]]; then
-		__args -?
+		__args # Any arg that doesn't exist in either function
 	else
 		if [[ "$1" =~ "-" ]]; then
 			# Arg mode

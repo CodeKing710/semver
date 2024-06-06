@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# semver's Functions and Variables
-
 # Vars
 __cwd="$(pwd)"
 prgroot="$HOME/.semver"
@@ -38,20 +36,19 @@ __cfg() {
 		echo "Rule: $(cat "$cfg" | grep ^$1$ || echo "No Rule Found!")"
 	shift; done
 }
-# Set app states in the following format:
-# states[name]=""
+
 declare -A states
 states[patch]="" # Any text within a bool state signifies true, less is better
 states[minor]=""
 states[major]=""
 states[stdin]=""
 
-# Add commands to the regex string below, separated by '|'
 lists[cmds]='^(patch|minor|major|file|config|verbose|help|version)$'
-lists[args]='^(-p|--patch|-m|--minor|-M|--major|-f|--file|-C|--config|-V|--verbose|-?|--help|-v|--version|--)$'
+lists[args]='^(-p|--patch|-m|--minor|-M|--major|-f|--file|-C|--config|-V|--verbose|-?|--help|-v|--version)$'
 
 __args() {
 	# Process
+	[[ -z "$1" ]] && cat "$prgroot"/help | head -1 && exit
 	while [[ -n "$1" ]]; do
 		case "${1,,}" in
 			-p | --patch )
@@ -89,9 +86,9 @@ __args() {
 					return 0
 				else
 					cat "$prgroot/help" | head -1
-					verbose "Grepped arg: '$(echo "${lists[args]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "$1")'"
+					verbose "Grepped arg: '$(echo "${lists[args]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "${1:--}")'"
 					error "'$1' is not a argument!"
-					error "Did you mean to use '$(echo "${lists[args]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "$1")'?"
+					error "Did you mean to use '$(echo "${lists[args]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "${1:--}")'?"
 					exit
 				fi
 				;;
