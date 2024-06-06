@@ -12,7 +12,10 @@ Options:
                               Available settings:
                               - au: Auto-updates
                               - vfile: Version file name
-                              - vformat: Version format, *=character(s), %=number(s) (to come)
+                              - vformat: Version format, version style contained within square brackets
+                                Generally should keep the version style as %%.%%.%% since semver supports that format
+                                for incremention (alphanumeric incremention is a bit more complex than what this script is for)
+                                **=word, *=character, %%=numbers, %=number
 
     -p, --patch, patch        Update the patch version of the version file.
 
