@@ -2,7 +2,9 @@
 
 # semver's main code
 
-autoupdate="$(cat $HOME/.semver/.cfg | grep 'autoup' | cut -d '=' -f2)"
+shopt -q -s extglob
+
+autoupdate="$(cat $HOME/.semver/.cfg | grep -E ^au | cut -d '=' -f2)"
 repo=$(find $HOME -type d -name "semver" 2>/dev/null | head -1)
 
 # Check for unit test
@@ -39,6 +41,8 @@ __semver() {
 }
 
 __semver "$@"
+
+shopt -q -u extglob
 
 # Cleanup for accidental sourcing
 unset __semver __args __cwd autoupdate repo
