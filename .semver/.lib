@@ -12,7 +12,8 @@ declare -A lists # For any lists your app may need as reference
 __loadcfg() {
 	local cfg="$prgroot/.cfg"
 	# Write config variables below like so: name=$(cat "$cfg" | grep 'name' | cut -d '=' -f2)
-	vfileloc=$(cat "$cfg" | grep 'vfileloc' | cut -d'=' -f2)
+	vfilename="$(cat "$cfg" | grep 'vfile' | cut -d'=' -f2)"
+	vfileloc="$(find ./ -maxdepth 2 -type f -name "$vfilename" | head -1)" # Just in case more than one version is found at depth 2
 }
 # Config vars will be set via function in-case of needing reloaded
 __loadcfg
@@ -47,7 +48,7 @@ states[stdin]=""
 
 # Add commands to the regex string below, separated by '|'
 lists[cmds]='^(patch|minor|major|file|config|verbose|help|version)$'
-lists[args]='^(-p|--patch|-m|--minor|-M|--major|-f|--file|-C|--config|-V|--verbose|-?|--help|-v|--version)$'
+lists[args]='^(-p|--patch|-m|--minor|-M|--major|-f|--file|-C|--config|-V|--verbose|-?|--help|-v|--version|--)$'
 
 __args() {
 	# Process
@@ -148,5 +149,35 @@ log() { echo -e '\e[0;1;32m[SEMVER]\e[0;0;0m '"$1"; }
 # Semver processing once states are collected
 __proc() {
 	# Bail-out one-liner
-	[[ -z "${states[patch]}" || -z "${states[minor]}" || -z "${states[major]}" || -z "${states[stdin]}" ]] && { error "Must specify how to update the version!"; exit; }
+	[[ -z "${states[patch]}" && -z "${states[minor]}" && -z "${states[major]}" && -z "${states[stdin]}" ]] && { error "Must specify how to update the version!"; exit; }
+
+	# Save the parts of the semver version file
+	local vfile="$(cat "$vfileloc")"
+	local vprefix="$(echo "${vfile//\n/}" | sed -e 's/.\..\..//')"
+	local version="$(echo "${vfile//\n/}" | sed -e 's/^[[:space:]]*[^.]*[[:space:]]*-[[:space:]]*v//')"
+	local major="$(echo "$version" | cut -d. -f1)" minor="$(echo "$version" | cut -d. -f2)" patch="$(echo "$version" | cut -d. -f3)"
+	verbose "Version file info: $vfile"
+	verbose "Current Version: $version"
+	verbose "Current Major iteration: $major"
+	verbose "Current Minor iteration: $minor"
+	verbose "Current Patch iteration: $patch"
+
+	# Check the part(s) to update (MUST CHECK SEPARATELY SO MINOR AND PATCH DON'T GET OVERWRITTEN)
+	if [[ -n "${states[major]}" ]]; then
+		major=$((major + 1)); minor=0; patch=0
+	fi
+	if [[ -n "${states[minor]}" ]]; then
+		minor=$((minor + 1)); patch=0
+	fi
+	if [[ -n "${states[patch]}" ]]; then
+		patch=$((patch + 1))
+	fi
+	verbose "New Major iteration: $major"
+	verbose "New Minor iteration: $minor"
+	verbose "New Patch iteration: $patch"
+	verbose "New Version file: $vprefix$major.$minor.$patch" 
+
+	# Push the changes to the file
+	echo "$vprefix$major.$minor.$patch" > "$vfileloc"
+	log "Version successfully updated!"
 }
