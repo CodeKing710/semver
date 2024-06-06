@@ -3,9 +3,11 @@
 # semver's installer
 install() {
 	local repo="$(dirname $(find "$HOME" -type d -name .semver 2>/dev/null | grep repo))"
-	cp "$repo"/semver "$HOME"/bin || return
-	cp -r "$repo"/.semver "$HOME"/ || return
-	[[ ! -e "$HOME"/.semver/.cfg ]] && { cp -f "$repo"/.semver/.cfg "$HOME"/.semver/.cfg || return 1; }
+	cp -f "$repo"/semver "$HOME"/bin || return
+	cp -f "$repo"/.semver/.lib "$HOME"/.lib || return
+	cp -f "$repo"/.semver/help "$HOME"/help || return
+	cp -f "$repo"/.semver/version "$HOME"/version || return
+	[[ ! -e "$HOME/.semver/.cfg" ]] && { cp -f "$repo"/.semver/.cfg "$HOME"/.semver/.cfg || return 1; }
 	echo "semver installed!"
 }
 
