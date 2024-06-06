@@ -15,8 +15,7 @@ if [[ "$SEMVER_TST" == "true" ]]; then
 	prgroot="$repo/.semver"
 elif [[ "$autoupdate" == "true" ]]; then
 	# Check for updates
-	[ ! -d "$HOME"/.semver ] && "$repo/install"
-	if [[ -n "$(diff "$repo"/.semver/.lib "$HOME"/.semver/.lib)" || -n "$(diff "$repo"/.semver/help "$HOME"/.semver/help)" || -n "$(diff "$repo"/.semver/version "$HOME"/.semver/version)" || -n "$(diff "$repo"/semver "$HOME"/bin/semver)" ]]; then echo "Updating semver..."; "$repo/install"; fi
+	if [[ ! -e "$HOME/.semver" || -n "$(diff "$repo"/.semver/.lib "$HOME"/.semver/.lib)" || -n "$(diff "$repo"/.semver/help "$HOME"/.semver/help)" || -n "$(diff "$repo"/.semver/version "$HOME"/.semver/version)" || -n "$(diff "$repo"/semver "$HOME"/bin/semver)" ]]; then "$repo/install"; fi
 	
 	# Load lib
 	source "$HOME"/.semver/.lib

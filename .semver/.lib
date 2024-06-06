@@ -12,6 +12,7 @@ __loadcfg() {
 	# Write config variables below like so: name=$(cat "$cfg" | grep 'name' | cut -d '=' -f2)
 	vfilename="$(cat "$cfg" | grep 'vfile' | cut -d'=' -f2)"
 	vfileloc="$(find ./ -maxdepth 2 -type f -name "$vfilename" | head -1)" # Just in case more than one version is found at depth 2
+	vformat="$(cat "$cfg" | grep 'vformat' | cut -d'=' -f2)"
 }
 # Config vars will be set via function in-case of needing reloaded
 __loadcfg
@@ -76,6 +77,10 @@ __args() {
 			-v | --version )
 				cat "$prgroot/version"
 				exit;;
+			--reset-cfg )
+        verbose "Resetting Semver to default configuration..."
+        cp -rf "$repo/.semver" "$HOME/" && log "Semver has been reset!" || error "Failed to reset defaults!"
+        exit;;
 			@(--) )
 				verbose "Reading stdin (pipe or redirect or as arg)"
 				states[stdin]="t"
@@ -148,12 +153,24 @@ __proc() {
 	# Bail-out one-liner
 	[[ -z "${states[patch]}" && -z "${states[minor]}" && -z "${states[major]}" && -z "${states[stdin]}" ]] && { error "Must specify how to update the version!"; exit; }
 
+	# Set the sed format
+	# *=character
+	# **=word
+	# %=0-9
+	# %%=>9
+	# Version style resides between the square brackets
+	local vsed="$(echo "$vformat" | cut -d'[' -f1 | sed -e 's/\(\*\*\)/#/g' -e 's/\*/\./g' -e 's/#/[\^\.]\*/g' -e 's/\(%%\)/#/g' -e 's/\(%\)/[[:digit:]]/g' -e 's/#/[\^[[:digit:]]]\*/g')"
+	local vpsed="$(echo "$vformat" | cut -d'[' -f2 | sed -e 's/\]//g' -e 's/\(\*\*\)/#/g' -e 's/\*/\./g' -e 's/#/[\^\.]\*/g' -e 's/\(%%\)/#/g' -e 's/\(%\)/[[:digit:]]/g' -e 's/#/[\^[[:digit:]]]\*/g')"
+	verbose "Version regex: $vsed"
+	verbose "Version prefix regex: $vpsed"
+
 	# Save the parts of the semver version file
 	local vfile="$(cat "$vfileloc")"
-	local vprefix="$(echo "${vfile//\n/}" | sed -e 's/.\..\..//')"
-	local version="$(echo "${vfile//\n/}" | sed -e 's/^[[:space:]]*[^.]*[[:space:]]*-[[:space:]]*v//')"
+	local vprefix="$(echo "${vfile//\n/}" | sed -e 's/'"$vpsed"'//')"
+	local version="$(echo "${vfile//\n/}" | sed -e 's/^[[:space:]]*'"$vsed"'//')"
 	local major="$(echo "$version" | cut -d. -f1)" minor="$(echo "$version" | cut -d. -f2)" patch="$(echo "$version" | cut -d. -f3)"
 	verbose "Version file info: $vfile"
+	verbose "Version prefix: $vprefix"
 	verbose "Current Version: $version"
 	verbose "Current Major iteration: $major"
 	verbose "Current Minor iteration: $minor"
