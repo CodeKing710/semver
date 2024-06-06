@@ -1,1 +1,23 @@
 Usage: semver [options] <args>
+
+Options:
+
+    -?, --help, help          Show this help message and exit.
+
+    -v, --version, version    Show version and exit.
+
+    -V, --verbose, verbose    Show detailed output.
+
+    -C, --config, config      Get/set settings.
+                              Available settings:
+                              - au: Auto-updates
+                              - vfile: Version file name
+                              - vformat: Version format, *=character(s), %=number(s) (to come)
+
+    -p, --patch, patch        Update the patch version of the version file.
+
+    -m, --minor, minor        Update the minor version of the version file.
+
+    -M, --major, major        Update the major version of the version file.
+
+For more information and available commands, visit https://github.com/CodeKing710/semver#readme.
