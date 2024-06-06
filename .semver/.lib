@@ -12,6 +12,7 @@ declare -A lists # For any lists your app may need as reference
 __loadcfg() {
 	local cfg="$prgroot/.cfg"
 	# Write config variables below like so: name=$(cat "$cfg" | grep 'name' | cut -d '=' -f2)
+	vfileloc=$(cat "$cfg" | grep 'vfileloc' | cut -d'=' -f2)
 }
 # Config vars will be set via function in-case of needing reloaded
 __loadcfg
@@ -39,17 +40,34 @@ __cfg() {
 # Set app states in the following format:
 # states[name]=""
 declare -A states
-states[cfg]="" # Any text within a bool state signifies true, less is better
+states[patch]="" # Any text within a bool state signifies true, less is better
+states[minor]=""
+states[major]=""
+states[stdin]=""
 
 # Add commands to the regex string below, separated by '|'
-lists[cmds]='^(config|verbose|help|version)$'
+lists[cmds]='^(patch|minor|major|file|config|verbose|help|version)$'
+lists[args]='^(-p|--patch|-m|--minor|-M|--major|-f|--file|-C|--config|-V|--verbose|-?|--help|-v|--version)$'
 
 __args() {
 	# Process
 	while [[ -n "$1" ]]; do
 		case "${1,,}" in
+			-p | --patch )
+				verbose "Patch version update"
+				states[patch]="t"
+				;;
+			-m | --minor )
+				verbose "Minor version update"
+				states[minor]="t"
+				;;
+			-M | --major )
+				verbose "Major version update"
+				states[major]="t"
+				;;
 			-C | --config )
-				states[cfg]="t"
+				verbose "Configure Settings chosen"
+				shift; __cfg "$@"
 				;;
 			-V | --verbose )
 				VERBOSE=true
@@ -60,12 +78,19 @@ __args() {
 			-v | --version )
 				cat "$prgroot/version"
 				exit;;
+			@(--) )
+				verbose "Reading stdin (pipe or redirect or as arg)"
+				states[stdin]="t"
+				;;
 			* ) # Catch-all
 				if [[ "$1" =~ ${lists[cmds]} ]]; then
 					__cmds "$1"
+					return 0
 				else
 					cat "$prgroot/help" | head -1
-					error "'$1' is not an argument!"
+					verbose "Grepped arg: '$(echo "${lists[args]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "$1")'"
+					error "'$1' is not a argument!"
+					error "Did you mean to use '$(echo "${lists[args]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "$1")'?"
 					exit
 				fi
 				;;
@@ -76,9 +101,22 @@ __cmds() {
 	# process
 	while [[ -n "$1" ]]; do
 		case "${1,,}" in
-			@(config) )
-				states[cfg]="t"
+			@(patch) )
+				verbose "Patch version update"
+				states[patch]="t"
 				;;
+			@(minor) )
+				verbose "Minor version update"
+				states[minor]="t"
+				;;
+			@(major) )
+				verbose "Major version update"
+				states[major]="t"
+				;;
+			@(config) )
+				verbose "Configure Settings chosen"
+				shift; __cfg "$@"
+				exit;;
 			@(verbose) )
 				VERBOSE=true
 				;;
@@ -91,15 +129,24 @@ __cmds() {
 			* ) # Catch-all
 				if [[ "$1" =~ ^- ]]; then
 					__args "$1"
+					return 0
 				else
 					cat "$prgroot/help" | head -1
+					verbose "Grepped command: '$(echo "${lists[cmds]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "$1")'"
 					error "'$1' is not a command!"
+					error "Did you mean to use '$(echo "${lists[cmds]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "$1")'?"
 					exit
 				fi
 				;;
 		esac
 	shift; done
 }
-error() { echo -e '\e[0;1;31m[ERROR]\e[0;0;0m '"$msg" >&2; }
-verbose() { [[ $VERBOSE ]] && echo -e '\e[0;1;35m[VERBOSE]\e[0;0;0m '"$msg"; }
-log() { echo -e '\e[0;1;32m[SEMVER]\e[0;0;0m '"$msg"; }
+error() { echo -e '\e[0;1;31m[ERROR]\e[0;0;0m '"$1" >&2; }
+verbose() { [[ -n "$VERBOSE" ]] && echo -e '\e[0;1;35m[VERBOSE]\e[0;0;0m '"$1"; }
+log() { echo -e '\e[0;1;32m[SEMVER]\e[0;0;0m '"$1"; }
+
+# Semver processing once states are collected
+__proc() {
+	# Bail-out one-liner
+	[[ -z "${states[patch]}" || -z "${states[minor]}" || -z "${states[major]}" || -z "${states[stdin]}" ]] && { error "Must specify how to update the version!"; exit; }
+}

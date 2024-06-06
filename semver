@@ -38,6 +38,7 @@ __semver() {
 		fi
 	fi
 	# Write your app's main flow here (General stub supports arg handling)
+	__proc # States are set now, we can process the version update
 }
 
 __semver "$@"
