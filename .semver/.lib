@@ -159,15 +159,15 @@ __proc() {
 	# %=0-9
 	# %%=>9
 	# Version style resides between the square brackets
-	local vsed="$(echo "$vformat" | cut -d'[' -f1 | sed -e 's/\(\*\*\)/#/g' -e 's/\*/\./g' -e 's/#/[\^\.]\*/g' -e 's/\(%%\)/#/g' -e 's/\(%\)/[[:digit:]]/g' -e 's/#/[\^[[:digit:]]]\*/g')"
-	local vpsed="$(echo "$vformat" | cut -d'[' -f2 | sed -e 's/\]//g' -e 's/\(\*\*\)/#/g' -e 's/\*/\./g' -e 's/#/[\^\.]\*/g' -e 's/\(%%\)/#/g' -e 's/\(%\)/[[:digit:]]/g' -e 's/#/[\^[[:digit:]]]\*/g')"
+	local vsed="$(echo "$vformat" | cut -d'[' -f1 | sed -e 's/\./\\./g' -e 's/\(\*\*\)/#/g' -e 's/\*/\./g' -e 's/#/[\^\.]\*/g' -e 's/\(%%\)/#/g' -e 's/\(%\)/[[:digit:]]/g' -e 's/#/[\^[[:digit:]]]\*/g')"
+	local vpsed="$(echo "$vformat" | cut -d'[' -f2 | sed -e 's/\./\\./g' -e 's/\]//g' -e 's/\(\*\*\)/#/g' -e 's/\*/\./g' -e 's/#/[\^\.]\*/g' -e 's/\(%%\)/#/g' -e 's/\(%\)/[[:digit:]]/g' -e 's/#/[[:digit:]]\*/g')"
 	verbose "Version regex: $vsed"
 	verbose "Version prefix regex: $vpsed"
 
 	# Save the parts of the semver version file
 	local vfile="$(cat "$vfileloc")"
 	local vprefix="$(echo "${vfile//\n/}" | sed -e 's/'"$vpsed"'//')"
-	local version="$(echo "${vfile//\n/}" | sed -e 's/^[[:space:]]*'"$vsed"'//')"
+	local version="$(echo "${vfile//\n/}" | sed -e 's/'"^$vsed"'//')"
 	local major="$(echo "$version" | cut -d. -f1)" minor="$(echo "$version" | cut -d. -f2)" patch="$(echo "$version" | cut -d. -f3)"
 	verbose "Version file info: $vfile"
 	verbose "Version prefix: $vprefix"
