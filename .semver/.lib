@@ -44,8 +44,8 @@ states[minor]=""
 states[major]=""
 states[stdin]=""
 
-lists[cmds]='^(patch|minor|major|file|config|verbose|help|version)$'
-lists[args]='^(-p|--patch|-m|--minor|-M|--major|-f|--file|-C|--config|-V|--verbose|-?|--help|-v|--version)$'
+lists[cmds]='^(patch|minor|major|repo|msg|config|verbose|help|version)$'
+lists[args]='^(-p|--patch|-m|--minor|-M|--major|-r|--repo|-g|--git-message|-C|--config|-V|--verbose|-?|--help|-v|--version)$'
 
 __args() {
 	# Process
@@ -63,6 +63,16 @@ __args() {
 			-M | --major )
 				verbose "Major version update"
 				states[major]="t"
+				;;
+			-r | --repo )
+				shift; 
+				[[ -z "$1" ]] && { error "Must supply a repo to target!"; exit; } || states[repo]="${1}"
+				verbose "Targeting repo ${states[repo]}"
+				;;
+			-g | --git-message )
+				shift; 
+				[[ -z "$1" ]] && states[msg]="Updated repo" || states[msg]="${1}"
+				verbose "Commit message supplied!\n${states[msg]}"
 				;;
 			-C | --config )
 				verbose "Configure Settings chosen"
@@ -116,6 +126,16 @@ __cmds() {
 				verbose "Major version update"
 				states[major]="t"
 				;;
+			@(repo) )
+				shift; 
+				[[ -z "$1" ]] && { error "Must supply a repo to target!"; exit; } || states[repo]="${1}"
+				verbose "Targeting repo ${states[repo]}"
+				;;
+			@(msg) )
+				shift; 
+				[[ -z "$1" ]] && states[msg]="Updated repo" || states[msg]="${1}"
+				verbose "Commit message supplied!\n${states[msg]}"
+				;;
 			@(config) )
 				verbose "Configure Settings chosen"
 				shift; __cfg "$@"
@@ -153,6 +173,14 @@ __proc() {
 	# Bail-out one-liner
 	[[ -z "${states[patch]}" && -z "${states[minor]}" && -z "${states[major]}" && -z "${states[stdin]}" ]] && { error "Must specify how to update the version!"; exit; }
 
+	# Check for a target repo
+	[[ -n "${states[repo]}" ]] && {
+		states[repoloc]="$(find -type d -name "${states[repo]}" | head -1)"
+		states[commit]='t'
+		vfileloc="$(find "${states[repoloc]}" -type f -name "$vfilename" | head -1)"
+		verbose "New version file location: $vfileloc"
+	}
+
 	# Set the sed format
 	# *=character
 	# **=word
@@ -189,7 +217,17 @@ __proc() {
 	verbose "New Major iteration: $major"
 	verbose "New Minor iteration: $minor"
 	verbose "New Patch iteration: $patch"
-	verbose "New Version file: $vprefix$major.$minor.$patch" 
+	verbose "New Version file: $vprefix$major.$minor.$patch"
+
+	# Check if the repo needs commited and pushed
+	[[ -n "${states[commit]}" ]] && {
+		verbose "Commiting and pushing to source control..."
+		cd "${states[repoloc]}"
+		git commit -a -m "${states[msg]}" || { error "Unable to commit and sync repo!"; exit; }
+		git push || { error "Unable to commit and sync repo!"; exit; }
+		cd "$__cwd"
+		log "Successfully synced repo!"
+	}
 
 	# Push the changes to the file
 	echo "$vprefix$major.$minor.$patch" > "$vfileloc"
