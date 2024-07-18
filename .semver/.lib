@@ -219,6 +219,10 @@ __proc() {
 	verbose "New Patch iteration: $patch"
 	verbose "New Version file: $vprefix$major.$minor.$patch"
 
+	# Push the changes to the file
+	echo "$vprefix$major.$minor.$patch" > "$vfileloc"
+	log "Version successfully updated!"
+	
 	# Check if the repo needs commited and pushed
 	[[ -n "${states[commit]}" ]] && {
 		verbose "Commiting and pushing to source control..."
@@ -228,8 +232,4 @@ __proc() {
 		cd "$__cwd"
 		log "Successfully synced repo!"
 	}
-
-	# Push the changes to the file
-	echo "$vprefix$major.$minor.$patch" > "$vfileloc"
-	log "Version successfully updated!"
 }
