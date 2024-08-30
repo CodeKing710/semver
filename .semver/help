@@ -23,4 +23,8 @@ Options:
 
     -M, --major, major        Update the major version of the version file.
 
+    -r, --repo, repo          Target a specific repo's version file.
+
+    -g, --git-message, msg    Override the default commit message when using '-r', '--repo', or 'repo'.
+
 For more information and available commands, visit https://github.com/CodeKing710/semver#readme.
