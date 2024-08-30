@@ -4,7 +4,7 @@
 install() {
 	local repo="$(dirname $(find "$HOME" -type d -name .semver 2>/dev/null | grep repo))"
 	cp -f "$repo"/semver "$HOME"/bin || return
-	mkdir "$HOME"/.semver;
+	[[ ! -e "$HOME/.semver" ]] && mkdir "$HOME"/.semver;
 	cp -f "$repo"/.semver/.lib "$HOME"/.semver || return
 	cp -f "$repo"/.semver/help "$HOME"/.semver || return
 	cp -f "$repo"/.semver/version "$HOME"/.semver || return

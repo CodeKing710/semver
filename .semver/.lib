@@ -11,7 +11,7 @@ __loadcfg() {
 	local cfg="$prgroot/.cfg"
 	# Write config variables below like so: name=$(cat "$cfg" | grep 'name' | cut -d '=' -f2)
 	vfilename="$(cat "$cfg" | grep 'vfile' | cut -d'=' -f2)"
-	vfileloc="$(find ./ -maxdepth 2 -type f -name "$vfilename" | head -1)" # Just in case more than one version is found at depth 2
+	vfileloc="$(find ./ -maxdepth 2 -type f -name "$vfilename" 2>/dev/null | head -1)" # Just in case more than one version is found at depth 2
 	vformat="$(cat "$cfg" | grep 'vformat' | cut -d'=' -f2)"
 }
 # Config vars will be set via function in-case of needing reloaded
@@ -175,9 +175,9 @@ __proc() {
 
 	# Check for a target repo
 	[[ -n "${states[repo]}" ]] && {
-		states[repoloc]="$(find -type d -name "${states[repo]}" | head -1)"
+		states[repoloc]="$(find -type d -name "${states[repo]}" 2>/dev/null | head -1)"
 		states[commit]='t'
-		vfileloc="$(find "${states[repoloc]}" -type f -name "$vfilename" | head -1)"
+		vfileloc="$(find "${states[repoloc]}" -type f -name "$vfilename" 2>/dev/null | head -1)"
 		verbose "New version file location: $vfileloc"
 	}
 

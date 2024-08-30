@@ -5,7 +5,7 @@
 shopt -q -s extglob
 
 autoupdate="$(cat $HOME/.semver/.cfg | grep -E ^au | cut -d '=' -f2)"
-repo=$(find $HOME -type d -name "semver" 2>/dev/null | head -1)
+repo="$(find $HOME -type d -name "semver" 2>/dev/null | head -1)"
 
 # Check for unit test
 if [[ "$SEMVER_TST" == "true" ]]; then
