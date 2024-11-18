@@ -9,6 +9,8 @@ install() {
 	cp -f "$repo"/.semver/help "$HOME"/.semver || return
 	cp -f "$repo"/.semver/version "$HOME"/.semver || return
 	[[ ! -e "$HOME/.semver/.cfg" ]] && { cp -f "$repo"/.semver/.cfg "$HOME"/.semver/ || return 1; }
+	# Attempt to add completion to system, otherwise default to ~/.d/.c/
+  [[ "$1" == "--sys" ]] && { [[ -e "/etc/bash_completion.d/semver-comp.sh" ]] || cp -f "$repo/.semver/semver-comp" "/etc/bash_completion.d/semver-comp.sh"; } || { [[ -e "$HOME/.d/semver-comp" ]] || cp -f "$repo/.semver/semver-comp" "$HOME/.d/semver-comp"; }
 	echo "semver installed!"
 }
 

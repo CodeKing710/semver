@@ -1,0 +1,35 @@
+#!/bin/bash
+
+_semver_completions() {
+  local cur prev ARGS CMDS CFGOPTS
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+  ARGS="-p -m -M -r -g -C -V -? -v --patch --minor --major --repo --git-message --config --verbose --help --version"
+  CMDS="patch minor major repo msg config verbose help version"
+  CFGOPTS="list RESET au vfile= vformat="
+
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY=( $(compgen -W "$ARGS" -- "$cur") )
+    return 0
+  fi
+
+  case "${prev}" in
+    semver )
+      COMPREPLY=( $(compgen -W "$CMDS" -- "$cur") )
+      return 0;;
+    repo | --repo | -r )
+      COMPREPLY=( $(compgen -W "$(ls $(find -name repos) | sed -e 's|/||')" -- "$cur") )
+      return 0;;
+    config | --config | -C )
+      COMPREPLY=( $(compgen -W "$CFGOPTS" -- "$cur") )
+      return 0;;
+    au )
+      COMPREPLY=( $(compgen -W "true false" -- "$cur") )
+      return 0;;
+    * )
+      COMPREPLY=( $(compgen -W "$CMDS" -- "$cur") )
+      return 0;;
+  esac
+}
+
+complete -F _semver_completions semver
