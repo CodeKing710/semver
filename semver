@@ -42,7 +42,5 @@ __semver() {
 
 __semver "$@"
 
-shopt -q -u extglob
-
 # Cleanup for accidental sourcing
-unset __semver __args __cwd autoupdate repo
+[[ $$ -eq $BASHPID ]] && { unset __semver __args __cwd autoupdate repo; shopt -q -u extglob; }

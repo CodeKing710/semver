@@ -38,14 +38,23 @@ __cfg() {
 	shift; done
 }
 
-declare -A states
-states[patch]="" # Any text within a bool state signifies true, less is better
-states[minor]=""
-states[major]=""
-states[stdin]=""
+if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
+	declare -A states
+	states[patch]="" # Any text within a bool state signifies true, less is better
+	states[minor]=""
+	states[major]=""
+	states[stdin]=""
 
-lists[cmds]='^(patch|minor|major|repo|msg|config|verbose|help|version)$'
-lists[args]='^(-p|--patch|-m|--minor|-M|--major|-r|--repo|-g|--git-message|-C|--config|-V|--verbose|-?|--help|-v|--version)$'
+	lists[cmds]='^(patch|minor|major|repo|msg|config|verbose|help|version)$'
+	lists[args]='^(-p|--patch|-m|--minor|-M|--major|-r|--repo|-g|--git-message|-C|--config|-V|--verbose|-?|--help|-v|--version)$'
+else
+	__patch=""
+	__minor=""
+	__major=""
+	__stdin="" # Prevent overwrite of any vars called stdin
+	cmds='^(patch|minor|major|repo|msg|config|verbose|help|version)$'
+	args='^(-p|--patch|-m|--minor|-M|--major|-r|--repo|-g|--git-message|-C|--config|-V|--verbose|-?|--help|-v|--version)$'
+fi
 
 __args() {
 	# Process
@@ -54,25 +63,41 @@ __args() {
 		case "${1}" in
 			-p | --patch )
 				verbose "Patch version update"
-				states[patch]="t"
+				if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
+					states[patch]="t"
+				else
+					__patch="t"
+				fi
 				;;
 			-m | --minor )
 				verbose "Minor version update"
-				states[minor]="t"
+				if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
+					states[minor]="t"
+				else
+					__minor="t"
+				fi
 				;;
 			-M | --major )
 				verbose "Major version update"
-				states[major]="t"
+				if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
+					states[major]="t"
+				else
+					__major="t"
+				fi
 				;;
 			-r | --repo )
 				shift; 
-				[[ -z "$1" ]] && { error "Must supply a repo to target!"; exit; } || states[repo]="${1}"
-				verbose "Targeting repo ${states[repo]}"
+				[[ -z "$1" ]] && { error "Must supply a repo to target!"; exit; } || {
+					[[ "${BASHVERSINFO[0]}" -ge 4 ]] && states[repo]="${1}" || __repo="${1}"
+				}
+				verbose "Targeting repo $([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[repo]}" || echo "${__repo}")"
 				;;
 			-g | --git-message )
 				shift; 
-				[[ -z "$1" ]] && states[msg]="Updated repo" || states[msg]="${1}"
-				verbose "Commit message supplied!\n${states[msg]}"
+				[[ -z "$1" ]] && states[msg]="Updated repo" || {
+					[[ "${BASHVERSINFO[0]}" -ge 4 ]] && states[msg]="${1}" || __msg="${1}"
+				}
+				verbose "Commit message supplied!\n$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[msg]}" || echo "${__msg}")"
 				;;
 			-C | --config )
 				verbose "Configure Settings chosen"
@@ -93,18 +118,22 @@ __args() {
         exit;;
 			@(--) )
 				verbose "Reading stdin (pipe or redirect or as arg)"
-				states[stdin]="t"
+				if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
+					states[stdin]="t"
+				else
+					__stdin="t"
+				fi
 				;;
 			* )
 				# Catch-all
-				if [[ "$1" =~ ${lists[cmds]} ]]; then
+				if [[ "$1" =~ $([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo ${lists[cmds]} || echo $cmds) ]]; then
 					__cmds "$1"
 					return 0
 				else
 					cat "$prgroot/help" | head -1
-					verbose "Grepped arg: '$(echo "${lists[args]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "${1:--}")'"
+					verbose "Grepped arg: '$(echo "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${lists[args]}" || echo $args)" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "${1:--}")'"
 					error "'$1' is not a argument!"
-					error "Did you mean to use '$(echo "${lists[args]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "${1:--}")'?"
+					error "Did you mean to use '$(echo "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${lists[args]}" || echo $args)" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "${1:--}")'?"
 					exit
 				fi
 				;;
@@ -117,25 +146,41 @@ __cmds() {
 		case "${1,,}" in
 			@(patch) )
 				verbose "Patch version update"
-				states[patch]="t"
+				if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
+					states[patch]="t"
+				else
+					__patch="t"
+				fi
 				;;
 			@(minor) )
 				verbose "Minor version update"
-				states[minor]="t"
+				if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
+					states[minor]="t"
+				else
+					__minor="t"
+				fi
 				;;
 			@(major) )
 				verbose "Major version update"
-				states[major]="t"
+				if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
+					states[major]="t"
+				else
+					__major="t"
+				fi
 				;;
 			@(repo) )
 				shift; 
-				[[ -z "$1" ]] && { error "Must supply a repo to target!"; exit; } || states[repo]="${1}"
-				verbose "Targeting repo ${states[repo]}"
+				[[ -z "$1" ]] && { error "Must supply a repo to target!"; exit; } || {
+					[[ "${BASHVERSINFO[0]}" -ge 4 ]] && states[repo]="${1}" || __repo="${1}"
+				}
+				verbose "Targeting repo $([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[repo]}" || echo "${__repo}")"
 				;;
 			@(msg) )
 				shift; 
-				[[ -z "$1" ]] && states[msg]="Updated repo" || states[msg]="${1}"
-				verbose "Commit message supplied!\n${states[msg]}"
+				[[ -z "$1" ]] && states[msg]="Updated repo" || {
+					[[ "${BASHVERSINFO[0]}" -ge 4 ]] && states[msg]="${1}" || __msg="${1}"
+				}
+				verbose "Commit message supplied!\n$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[msg]}" || echo "${__msg}")"
 				;;
 			@(config) )
 				verbose "Configure Settings chosen"
@@ -157,29 +202,34 @@ __cmds() {
 					return 0
 				else
 					cat "$prgroot/help" | head -1
-					verbose "Grepped command: '$(echo "${lists[cmds]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "$1")'"
+					verbose "Grepped command: '$(echo "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${lists[cmds]}" || echo $cmds)" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "$1")'"
 					error "'$1' is not a command!"
-					error "Did you mean to use '$(echo "${lists[cmds]}" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "$1")'?"
+					error "Did you mean to use '$(echo "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${lists[cmds]}" || echo $cmds)" | sed -e 's/\^\|[\(]\|[\)]\|\$//g' -e 's/[\|]/\n/g' | grep "$1")'?"
 					exit
 				fi
 				;;
 		esac
 	shift; done
 }
-error() { echo -e '\e[0;1;31m[ERROR]\e[0;0;0m '"$1" >&2; }
-verbose() { [[ -n "$VERBOSE" ]] && echo -e '\e[0;1;35m[VERBOSE]\e[0;0;0m '"$1"; }
-log() { echo -e '\e[0;1;32m[SEMVER]\e[0;0;0m '"$1"; }
+error() { printf '\e[0;1;31m[ERROR]\e[0;0;0m '"$1\n" >&2; }
+verbose() { [[ -n "$VERBOSE" ]] && printf '\e[0;1;35m[VERBOSE]\e[0;0;0m '"$1\n"; }
+log() { printf '\e[0;1;32m[SEMVER]\e[0;0;0m '"$1\n"; }
 
 # Semver processing once states are collected
 __proc() {
 	# Bail-out one-liner
-	[[ -z "${states[patch]}" && -z "${states[minor]}" && -z "${states[major]}" && -z "${states[stdin]}" ]] && { error "Must specify how to update the version!"; exit; }
+	[[ -z "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[patch]}" || echo "$__patch")" && -z "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[minor]}" || echo "$__minor")" && -z "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[major]}" || echo "$__major")" && -z "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[stdin]}" || echo "$__stdin")" ]] && { error "Must specify how to update the version!"; exit; }
 
 	# Check for a target repo
-	[[ -n "${states[repo]}" ]] && {
-		states[repoloc]="$(find -type d -name "${states[repo]}" 2>/dev/null | head -1)"
-		states[commit]='t'
-		vfileloc="$(find "${states[repoloc]}" -type f -name "$vfilename" 2>/dev/null | head -1)"
+	[[ -n "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[repo]}" || echo "$__repo")" ]] && {
+		if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
+			states[repoloc]="$(find -type d -name "${states[repo]}" 2>/dev/null | head -1)"
+			states[commit]='t'
+		else
+			__repoloc="$__repo"
+			__commit="t"
+		fi
+		vfileloc="$(find "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[repoloc]}" || echo "$__repoloc")" -type f -name "$vfilename" 2>/dev/null | head -1)"
 		verbose "New version file location: $vfileloc"
 	}
 
@@ -207,13 +257,13 @@ __proc() {
 	verbose "Current Patch iteration: $patch"
 
 	# Check the part(s) to update (MUST CHECK SEPARATELY SO MINOR AND PATCH DON'T GET OVERWRITTEN)
-	if [[ -n "${states[major]}" ]]; then
+	if [[ -n "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[major]}" || echo "$__major")" ]]; then
 		major=$((major + 1)); minor=0; patch=0
 	fi
-	if [[ -n "${states[minor]}" ]]; then
+	if [[ -n "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[minor]}" || echo "$__minor")" ]]; then
 		minor=$((minor + 1)); patch=0
 	fi
-	if [[ -n "${states[patch]}" ]]; then
+	if [[ -n "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[patch]}" || echo "$__patch")" ]]; then
 		patch=$((patch + 1))
 	fi
 	verbose "New Major iteration: $major"
@@ -226,10 +276,10 @@ __proc() {
 	log "Version successfully updated!"
 	
 	# Check if the repo needs commited and pushed
-	[[ -n "${states[commit]}" ]] && {
+	[[ -n "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[commit]}" || echo "$__commit")" ]] && {
 		verbose "Commiting and pushing to source control..."
-		cd "${states[repoloc]}"
-		git commit -a -m "${states[msg]}" || { error "Unable to commit and sync repo!"; exit; }
+		cd "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[repoloc]}" || echo "$__repoloc")"
+		git commit -a -m "$([[ "${BASHVERSINFO[0]}" -ge 4 ]] && echo "${states[msg]}" || echo "$__msg")" || { error "Unable to commit and sync repo!"; exit; }
 		git push || { error "Unable to commit and sync repo!"; exit; }
 		cd "$__cwd"
 		log "Successfully synced repo!"
