@@ -4,8 +4,6 @@
 __cwd="$(pwd)"
 prgroot="$HOME/.semver"
 
-declare -A lists # For any lists your app may need as reference
-
 # Config
 __loadcfg() {
 	local cfg="$prgroot/.cfg"
@@ -40,6 +38,7 @@ __cfg() {
 
 if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
 	declare -A states
+	declare -A lists # For any lists your app may need as reference
 	states[patch]="" # Any text within a bool state signifies true, less is better
 	states[minor]=""
 	states[major]=""
@@ -142,8 +141,10 @@ __args() {
 }
 __cmds() {
 	# process
+	[[ -z "$1" ]] && cat "$prgroot"/help | head -1 && exit
+	1="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
 	while [[ -n "$1" ]]; do
-		case "${1,,}" in
+		case "${1}" in
 			@(patch) )
 				verbose "Patch version update"
 				if [[ "${BASHVERSINFO[0]}" -ge 4 ]]; then
