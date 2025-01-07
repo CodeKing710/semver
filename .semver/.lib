@@ -142,7 +142,7 @@ __args() {
 __cmds() {
 	# process
 	[[ -z "$1" ]] && cat "$prgroot"/help | head -1 && exit
-	1="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
+	1="$(echo "$1" | tr '[:upper:]' '[:lower:]')" 2>/dev/null
 	while [[ -n "$1" ]]; do
 		case "${1}" in
 			@(patch) )
