@@ -10,7 +10,7 @@ install() {
 	cp -f "$repo"/.semver/version "$HOME"/.semver || return
 	[[ ! -e "$HOME/.semver/.cfg" ]] && { cp -f "$repo"/.semver/.cfg "$HOME"/.semver/ || return 1; }
 	# Attempt to add completion to system, otherwise default to ~/.d/.c/
-  [[ ! -e "$HOME/.d/semver-comp" ]] && cp -f "$repo/.semver/semver-comp" "$HOME/.d/semver-comp"
+  cp -f "$repo/.semver/semver-comp" "$HOME/.d/semver-comp"
 	echo "semver installed!"
 }
 
