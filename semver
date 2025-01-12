@@ -5,7 +5,18 @@
 shopt -q -s extglob
 
 autoupdate="$(cat $HOME/.semver/.cfg | grep -E ^au | cut -d '=' -f2)"
-repo="$(find $HOME -type d -name "semver" 2>/dev/null | head -1)"
+
+if (( autoupdate )); then
+	if [[ -e "$HOME/repos/semver" ]]; then
+		repo="$HOME/repos/semver"
+	else
+		repo="$(find "$HOME" -type d -name semver 2>/dev/null)"
+	fi
+	# Check for updates
+	if [[ ! -e "$HOME/.semver" || -n "$(diff "$repo"/.semver/.lib "$HOME"/.semver/.lib)" || -n "$(diff "$repo"/.semver/help "$HOME"/.semver/help)" || -n "$(diff "$repo"/.semver/version "$HOME"/.semver/version)" || -n "$(diff "$repo"/semver "$HOME"/bin/semver)" ]]; then
+		"$repo/install"
+	fi
+fi
 
 # Check for unit test
 if [[ "$SEMVER_TST" == "true" ]]; then
@@ -13,12 +24,6 @@ if [[ "$SEMVER_TST" == "true" ]]; then
 	echo -e "[SEMVER] UNIT TEST MODE! READING FROM REPO!"
 	source "$repo"/.semver/.lib
 	prgroot="$repo/.semver"
-elif [[ "$autoupdate" == "true" ]]; then
-	# Check for updates
-	if [[ ! -e "$HOME/.semver" || -n "$(diff "$repo"/.semver/.lib "$HOME"/.semver/.lib)" || -n "$(diff "$repo"/.semver/help "$HOME"/.semver/help)" || -n "$(diff "$repo"/.semver/version "$HOME"/.semver/version)" || -n "$(diff "$repo"/semver "$HOME"/bin/semver)" ]]; then "$repo/install"; fi
-	
-	# Load lib
-	source "$HOME"/.semver/.lib
 else
 	source "$HOME"/.semver/.lib
 fi

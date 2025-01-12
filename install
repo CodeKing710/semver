@@ -2,7 +2,11 @@
 
 # semver's installer
 install() {
-	local repo="$(dirname $(find "$HOME" -type d -name .semver 2>/dev/null | grep repo))"
+	if [[ -e "$HOME/repos/semver" ]]; then
+		local repo="$HOME/repos/semver"
+	else
+		local repo="$(find "$HOME" -type d -name semver 2>/dev/null)"
+	fi
 	cp -f "$repo"/semver "$HOME"/bin || return
 	[[ ! -e "$HOME/.semver" ]] && mkdir "$HOME"/.semver;
 	cp -f "$repo"/.semver/.lib "$HOME"/.semver || return
