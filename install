@@ -1,21 +1,22 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # semver's installer
 install() {
-	if [[ -e "$HOME/repos/semver" ]]; then
-		local repo="$HOME/repos/semver"
+	if [ -e "$HOME/repos/semver" ]; then
+		repo="$HOME/repos/semver"
 	else
-		local repo="$(find "$HOME" -type d -name semver 2>/dev/null)"
+		repo="$(find "$HOME" -type d -name semver 2>/dev/null)"
 	fi
 	cp -f "$repo"/semver "$HOME"/bin || return
-	[[ ! -e "$HOME/.semver" ]] && mkdir "$HOME"/.semver;
+	[ ! -e "$HOME/.semver" ] && mkdir "$HOME"/.semver;
 	cp -f "$repo"/.semver/.lib "$HOME"/.semver || return
 	cp -f "$repo"/.semver/help "$HOME"/.semver || return
 	cp -f "$repo"/.semver/version "$HOME"/.semver || return
-	[[ ! -e "$HOME/.semver/.cfg" ]] && { cp -f "$repo"/.semver/.cfg "$HOME"/.semver/ || return 1; }
+	[ ! -e "$HOME/.semver/.cfg" ] && { cp -f "$repo"/.semver/.cfg "$HOME"/.semver/ || return 1; }
 	# Attempt to add completion to system, otherwise default to ~/.d/.c/
   cp -f "$repo/.semver/semver-comp" "$HOME/.d/semver-comp"
 	echo "semver installed!"
+	unset repo
 }
 
 install
